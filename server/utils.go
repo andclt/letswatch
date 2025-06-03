@@ -41,8 +41,11 @@ func loadAllowedOrigins() map[string]bool {
 		"http://localhost:8080": true,
 	}
 
-	if extOrigin := os.Getenv("CHROME_EXTENSION"); extOrigin != "" {
-		origins[extOrigin] = true
+	if extOriginsEnv := os.Getenv("CHROME_EXTENSION"); extOriginsEnv != "" {
+		extOrigins := strings.Split(extOriginsEnv, ",")
+		for _, origin := range extOrigins {
+			origins[origin] = true
+		}
 	}
 
 	return origins
