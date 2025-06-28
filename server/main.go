@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
@@ -39,6 +40,12 @@ type ClientMessage struct {
 		CurrentTime float64 `json:"currentTime"`
 		IsPaused    bool    `json:"isPaused"`
 	} `json:"data"`
+}
+
+type ServerMessage struct {
+	Type   string `json:"type"`
+	RoomID string `json:"roomId,omitempty"`
+	Error  string `json:"error,omitempty"`
 }
 
 func init() {
@@ -84,21 +91,60 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var targetRoom *Room
-	if initialMsg.RoomID == "" && initialMsg.Type == "JOIN_ROOM" {
-		logger.Warn("handleWebSocket: Missing roomID in initial msg", "client", conn.RemoteAddr().String(), "error", err)
-		conn.Close()
-		return
-	}
+	var responseMsg ServerMessage
 
 	switch initialMsg.Type {
 	case "CREATE_ROOM":
-		targetRoom = globalRoomManager.createRoom()
+		if targetRoom = globalRoomManager.createRoom(); targetRoom != nil {
+			responseMsg = ServerMessage{
+				Type:   "ROOM_CREATED",
+				RoomID: targetRoom.id,
+			}
+		} else {
+			responseMsg = ServerMessage{
+				Type:  "ROOM_ERROR",
+				Error: "Failed to create room",
+			}
+		}
 	case "JOIN_ROOM":
-		targetRoom = globalRoomManager.getRoom(initialMsg.RoomID)
+		if initialMsg.RoomID == "" {
+			logger.Warn("handleWebSocket: Missing roomID in initial msg", "client", conn.RemoteAddr().String())
+			responseMsg = ServerMessage{
+				Type:  "ROOM_ERROR",
+				Error: "Missing room ID",
+			}
+		} else if targetRoom = globalRoomManager.getRoom(initialMsg.RoomID); targetRoom == nil {
+			responseMsg = ServerMessage{
+				Type:  "ROOM_ERROR",
+				Error: "Room not found",
+			}
+		} else {
+			responseMsg = ServerMessage{
+				Type:   "ROOM_JOINED",
+				RoomID: targetRoom.id,
+			}
+		}
 	default:
 		logger.Warn("handleWebSocket: Invalid initial msg type", "client", conn.RemoteAddr().String(), "type", initialMsg.Type)
-		conn.Close()
-		return
+		responseMsg = ServerMessage{
+			Type:  "ROOM_ERROR",
+			Error: "Invalid message type",
+		}
+	}
+
+	if responseMsg.Type != "" {
+		responseBytes, err := json.Marshal(responseMsg)
+		if err != nil {
+			logger.Error("handleWebSocket: Failed to marshal response", "error", err)
+			conn.Close()
+			return
+		}
+
+		if err := conn.WriteMessage(websocket.TextMessage, responseBytes); err != nil {
+			logger.Error("handleWebSocket: Failed to send response", "error", err)
+			conn.Close()
+			return
+		}
 	}
 
 	if targetRoom == nil {
@@ -106,7 +152,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	} else {
-		logger.Info("handleWebSocket: Client successfully completed", "action", initialMsg.Type, "client", conn.RemoteAddr().String(), "roomID", initialMsg.RoomID)
+		logger.Info("handleWebSocket: Client successfully completed", "action", initialMsg.Type, "client", conn.RemoteAddr().String(), "roomID", targetRoom.id)
 	}
 
 	client := &User{
