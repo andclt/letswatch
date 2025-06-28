@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"flag"
 	"log/slog"
 	"os"
@@ -49,4 +51,14 @@ func loadAllowedOrigins() map[string]bool {
 	}
 
 	return origins
+}
+
+func generateRandomID() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.URLEncoding.EncodeToString(b), err
 }

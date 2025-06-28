@@ -15,7 +15,7 @@ func newRoomManager() *RoomManager {
 	}
 }
 
-func (rm *RoomManager) getOrCreateRoom(id string) *Room {
+func (rm *RoomManager) getRoom(id string) *Room {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -24,7 +24,20 @@ func (rm *RoomManager) getOrCreateRoom(id string) *Room {
 		return room
 	}
 
-	logger.Info("Creating new room", "roomID", id)
+	return nil
+}
+
+func (rm *RoomManager) createRoom() *Room {
+	rm.mu.Lock()
+	defer rm.mu.Unlock()
+
+	id, err := generateRandomID()
+	if err != nil {
+		logger.Error("RoomManager: Failed to generate random ID room")
+		return nil
+	}
+
+	logger.Info("RoomManager: Creating new room", "roomID", id)
 	room := newRoom(id, rm)
 	rm.rooms[id] = room
 	go room.run()

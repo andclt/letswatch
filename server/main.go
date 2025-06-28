@@ -91,9 +91,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch initialMsg.Type {
-	case "CREATE_ROOM", "JOIN_ROOM":
-		targetRoom = globalRoomManager.getOrCreateRoom(initialMsg.RoomID)
-		logger.Info("handleWebSocket: Client joined room", "client", conn.RemoteAddr().String(), "type", initialMsg.Type, "roomID", initialMsg.RoomID)
+	case "CREATE_ROOM":
+		targetRoom = globalRoomManager.createRoom()
+	case "JOIN_ROOM":
+		targetRoom = globalRoomManager.getRoom(initialMsg.RoomID)
 	default:
 		logger.Warn("handleWebSocket: Invalid initial msg type", "client", conn.RemoteAddr().String(), "type", initialMsg.Type)
 		conn.Close()
@@ -101,9 +102,11 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if targetRoom == nil {
-		logger.Error("handleWebSocket: Failed to get or create room", "client", conn.RemoteAddr().String(), "roomID", initialMsg.RoomID)
+		logger.Error("handleWebSocket: Failed to", "action", initialMsg.Type, "client", conn.RemoteAddr().String(), "roomID", initialMsg.RoomID)
 		conn.Close()
 		return
+	} else {
+		logger.Info("handleWebSocket: Client successfully completed", "action", initialMsg.Type, "client", conn.RemoteAddr().String(), "roomID", initialMsg.RoomID)
 	}
 
 	client := &User{
