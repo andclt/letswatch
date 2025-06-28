@@ -84,7 +84,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var targetRoom *Room
-	if initialMsg.RoomID == "" {
+	if initialMsg.RoomID == "" && initialMsg.Type == "JOIN_ROOM" {
 		logger.Warn("handleWebSocket: Missing roomID in initial msg", "client", conn.RemoteAddr().String(), "error", err)
 		conn.Close()
 		return
