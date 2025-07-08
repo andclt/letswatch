@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Let's Watch Together",
+  "version": "1.0.0",
+  "description": "Watch YouTube videos synchronously with friends",
+  "minimum_chrome_version": "116",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://lets-watch-ffrj.onrender.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js", "utils.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}

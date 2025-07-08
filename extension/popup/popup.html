@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Chrome extension for watching videos together with friends">
+    <title>Let's Watch Together</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <main class="popup-container">
+        <header class="popup-header">
+            <h1 class="popup-title">Let's Watch Together</h1>
+            <p class="popup-subtitle">Watch videos in sync with friends</p>
+        </header>
+
+        <section class="popup-content">
+            <div class="action-buttons">
+                <button type="button" id="createRoom" class="btn btn-primary">
+                    <span class="btn-icon">🎬</span>
+                    Create Watch Party
+                </button>
+            </div>
+
+            <div class="join-section">
+                <div class="input-group">
+                    <label for="roomId" class="input-label">Room ID</label>
+                    <input 
+                        type="text" 
+                        id="roomId" 
+                        name="roomId"
+                        class="input-field"
+                        placeholder="Enter room ID to join"
+                        autocomplete="off"
+                    >
+                </div>
+                <button type="button" id="joinRoom" class="btn btn-secondary">
+                    <span class="btn-icon">👥</span>
+                    Join Watch Party
+                </button>
+            </div>
+
+            <div id="status" class="status-message" role="status" aria-live="polite"></div>
+
+            <div id="roomInfo" class="room-info" style="display: none;">
+                <h3 class="room-info-title">Current Room</h3>
+                <div class="room-id-container">
+                    <code id="currentRoomId" class="room-id"></code>
+                    <button type="button" id="copyRoomId" class="btn btn-copy" title="Copy room ID">
+                        📋
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="popup.js"></script>
+</body>
+</html> 
